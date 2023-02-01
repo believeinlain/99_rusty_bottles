@@ -76,7 +76,6 @@ fn main() -> std::io::Result<()> {
 #[cfg(test)]
 mod tests {
     use crate::sing;
-    use pretty_assertions::assert_eq;
 
     #[test]
     fn verify_lyrics() {
