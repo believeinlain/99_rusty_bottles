@@ -22,12 +22,7 @@ impl Bottles {
         }
     }
     fn on_the_wall(&self) -> bool {
-        match self {
-            Bottles::Many(num) => num > &0,
-            Bottles::One => true,
-            Bottles::None => true,
-            Bottles::BuyMore(_) => false,
-        }
+        !matches!(self, Bottles::BuyMore(_))
     }
     fn first_verse<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
         match self {
