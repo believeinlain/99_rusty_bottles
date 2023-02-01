@@ -1,66 +1,86 @@
-enum Bottles {
-    Many(u8),
-    One,
-    None,
-    BuyMore(u8),
+mod bottles {
+    pub enum Bottles<T> {
+        Many(T),
+        One,
+        None,
+        BuyMore(T),
+    }
+
+    use std::{ops::Sub, fmt::Display};
+
+    use Bottles::*;
+
+    impl<T> Bottles<T> where T: Into<usize> + From<u8> + Sub<u8, Output = T> + Display + Copy {
+        pub fn new(num: T) -> Self {
+            match Into::<usize>::into(num) {
+                0 => None,
+                1 => One,
+                _ => Many(num),
+            }
+        }
+        pub fn take_one_down(self) -> Self {
+            match self {
+                Bottles::Many(num) => {
+                    let new_num = num - 1;
+                    match Into::<usize>::into(new_num) {
+                        1 => One,
+                        _ => Many(new_num),
+                    }
+                }
+                One => None,
+                None => BuyMore(T::from(99u8)),
+                BuyMore(num) => Many(num),
+            }
+        }
+        pub fn on_the_wall(&self) -> bool {
+            !matches!(self, Bottles::BuyMore(_))
+        }
+        pub fn first_verse<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
+            match self {
+                Many(num) => writeln!(
+                    w,
+                    "{num} bottles of beer on the wall, {num} bottles of beer."
+                ),
+                One => writeln!(w, "1 bottle of beer on the wall, 1 bottle of beer."),
+                None => writeln!(
+                    w,
+                    "No more bottles of beer on the wall, no more bottles of beer."
+                ),
+                BuyMore(_) => Ok(()),
+            }
+        }
+        pub fn second_verse<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
+            match self {
+                Many(num) => writeln!(
+                    w,
+                    "Take one down and pass it around, {num} bottles of beer on the wall.\n"
+                ),
+                One => writeln!(
+                    w,
+                    "Take one down and pass it around, 1 bottle of beer on the wall.\n"
+                ),
+                None => writeln!(
+                    w,
+                    "Take one down and pass it around, no more bottles of beer on the wall.\n"
+                ),
+                BuyMore(num) => writeln!(
+                    w,
+                    "Go to the store and buy some more, {num} bottles of beer on the wall."
+                ),
+            }
+        }
+    }
+    // impl<T> Default for Bottles<T> where T: From<usize> {
+    //     fn default() -> Self {
+    //         Bottles::new(T::from(99))
+    //     }
+    // }
 }
 
-impl Bottles {
-    fn take_one_down(self) -> Self {
-        match self {
-            Bottles::Many(num) => {
-                let new_num = num - 1;
-                match new_num {
-                    1 => Bottles::One,
-                    _ => Bottles::Many(new_num),
-                }
-            }
-            Bottles::One => Bottles::None,
-            Bottles::None => Bottles::BuyMore(99),
-            Bottles::BuyMore(num) => Bottles::Many(num),
-        }
-    }
-    fn on_the_wall(&self) -> bool {
-        !matches!(self, Bottles::BuyMore(_))
-    }
-    fn first_verse<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
-        match self {
-            Bottles::Many(num) => writeln!(
-                writer,
-                "{num} bottles of beer on the wall, {num} bottles of beer."
-            ),
-            Bottles::One => writeln!(writer, "1 bottle of beer on the wall, 1 bottle of beer."),
-            Bottles::None => writeln!(
-                writer,
-                "No more bottles of beer on the wall, no more bottles of beer."
-            ),
-            Bottles::BuyMore(_) => Ok(()),
-        }
-    }
-    fn second_verse<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
-        match self {
-            Bottles::Many(num) => writeln!(
-                writer,
-                "Take one down and pass it around, {num} bottles of beer on the wall.\n"
-            ),
-            Bottles::One => writeln!(
-                writer,
-                "Take one down and pass it around, 1 bottle of beer on the wall.\n"
-            ),
-            Bottles::None => writeln!(
-                writer,
-                "Take one down and pass it around, no more bottles of beer on the wall.\n"
-            ),
-            Bottles::BuyMore(num) => writeln!(
-                writer,
-                "Go to the store and buy some more, {num} bottles of beer on the wall."
-            ),
-        }
-    }
-}
+use bottles::Bottles;
 
 fn sing<W: std::io::Write>(writer: &mut W) -> std::io::Result<()> {
-    let mut bottles = Bottles::Many(99);
+    let mut bottles = Bottles::<usize>::new(99usize);
     while bottles.on_the_wall() {
         bottles.first_verse(writer)?;
         bottles = bottles.take_one_down();
