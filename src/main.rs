@@ -11,7 +11,6 @@ impl Bottles {
             Bottles::Many(num) => {
                 let new_num = num - 1;
                 match new_num {
-                    // 0 => Bottles::None,
                     1 => Bottles::One,
                     _ => Bottles::Many(new_num),
                 }
