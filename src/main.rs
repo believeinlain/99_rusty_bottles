@@ -1,37 +1,43 @@
 mod bottles {
-    pub enum Bottles<T> {
-        Many(T),
+    pub enum Bottles {
+        Many(u8),
         One,
         None,
-        BuyMore(T),
+        BuyMore(u8),
     }
-
-    use std::{ops::Sub, fmt::Display};
 
     use Bottles::*;
 
-    // trait QuacksLikeANumber {} // Optionally add some type bounds here also
+    macro_rules! take_one_down {
+        ($writer:ident) => {
+            writeln!(
+                $writer,
+                "Take one down and pass it around, no more bottles of beer on the wall.\n"
+            )
+        };
+        ($writer:ident,$num:expr,$bottles:literal) => {
+            writeln!(
+                $writer,
+                concat!(
+                    "Take one down and pass it around, {} ",
+                    $bottles,
+                    " of beer on the wall.\n"
+                ),
+                $num
+            )
+        };
+        ($writer:ident,$num:expr,$bottles:literal,$go_to_store:literal) => {
+            writeln!(
+                $writer,
+                concat!($go_to_store, ", {} ", $bottles, " of beer on the wall."),
+                $num
+            )
+        };
+    }
 
-    // // Implement this trait for everything that also implements the following
-    // impl<T> QuacksLikeANumber for T where
-    //     T: Add<Output = Self>
-    //         + Div<Output = Self>
-    //         + Mul<Output = Self>
-    //         + Sub<Output = Self>
-    //         + Rem<Output = Self>
-    //         + Copy
-    //         + PartialEq
-    //         + PartialOrd
-    //         // Add the below if you don't want floats.
-    //         + Eq
-    //         + Ord
-            
-    // {
-    // }
-
-    impl<T> Bottles<T> where T: Into<usize> + From<u8> + Sub<u8, Output = T> + Display + Copy {
-        pub fn new(num: T) -> Self {
-            match Into::<usize>::into(num) {
+    impl Bottles {
+        pub fn new(num: u8) -> Self {
+            match num {
                 0 => None,
                 1 => One,
                 _ => Many(num),
@@ -47,7 +53,7 @@ mod bottles {
                     }
                 }
                 One => None,
-                None => BuyMore(T::from(99u8)),
+                None => BuyMore(99),
                 BuyMore(num) => Many(num),
             }
         }
@@ -70,36 +76,21 @@ mod bottles {
         }
         pub fn second_verse<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
             match self {
-                Many(num) => writeln!(
-                    w,
-                    "Take one down and pass it around, {num} bottles of beer on the wall.\n"
-                ),
-                One => writeln!(
-                    w,
-                    "Take one down and pass it around, 1 bottle of beer on the wall.\n"
-                ),
-                None => writeln!(
-                    w,
-                    "Take one down and pass it around, no more bottles of beer on the wall.\n"
-                ),
-                BuyMore(num) => writeln!(
-                    w,
-                    "Go to the store and buy some more, {num} bottles of beer on the wall."
-                ),
+                Many(num) => take_one_down!(w, num, "bottles"),
+                One => take_one_down!(w, 1, "bottle"),
+                None => take_one_down!(w),
+                BuyMore(num) => {
+                    take_one_down!(w, num, "bottles", "Go to the store and buy some more")
+                }
             }
         }
     }
-    // impl<T> Default for Bottles<T> where T: From<usize> {
-    //     fn default() -> Self {
-    //         Bottles::new(T::from(99))
-    //     }
-    // }
 }
 
 use bottles::Bottles;
 
 fn sing<W: std::io::Write>(writer: &mut W) -> std::io::Result<()> {
-    let mut bottles = Bottles::<usize>::new(99usize);
+    let mut bottles = Bottles::new(99);
     while bottles.on_the_wall() {
         bottles.first_verse(writer)?;
         bottles = bottles.take_one_down();
